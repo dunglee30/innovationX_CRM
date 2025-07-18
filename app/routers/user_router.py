@@ -62,39 +62,28 @@ async def get_user_associated_events(
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
 
 @router.get(
-    "/by_hosted_event_count",
+    "/by_role_event_count",
     response_model=List[User],
     summary="Get Users by Hosted Event Count",
     description="Retrieves users who have hosted at least the specified number of events.",
 )
-async def get_users_by_hosted_event_count(
+async def get_users_by_role_event_count(
     min_events: int = Query(1, description="Minimum number of hosted events"),
-    user_repo: UserRepository = Depends(get_user_repo),
+    role: str = Query("host", description="Role to filter users by"),
     relations_repo: UserEventRelationsRepository = Depends(get_user_event_relations_repo)
 ):
     """
     Retrieves users who have hosted at least min_events events.
     """
     try:
-        # Get all host relations
-        host_relations = relations_repo.get_relations_by_role("host")
-        # Count events per user
-        from collections import Counter
-        user_event_counts = Counter(rel['user_id'] for rel in host_relations)
-        # Filter user_ids
-        filtered_user_ids = [user_id for user_id, count in user_event_counts.items() if count >= min_events]
-        # Fetch user profiles
-        users = []
-        for user_id in filtered_user_ids:
-            user_data = user_repo.get_user_by_id(user_id)
-            if user_data:
-                users.append(User(**user_data))
+        users = relations_repo.get_event_users_by_role_and_min_events(min_events, role)
         if not users:
             raise HTTPException(status_code=404, detail=f"No users found with at least {min_events} hosted events.")
         return users
     except ClientError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
     except Exception as e:
+        logger.error(f"Unexpected error in get_users_by_hosted_event_count: {e}")
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
 
 @router.post(

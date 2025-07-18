@@ -9,10 +9,16 @@ class UserEventRelation(BaseModel):
     GSI1_SK: str
     type: str # e.g., "EventOwnership", "EventHosting"
     user_id: str
-    event_id: str
     role: str # e.g., "owner", "host", "attendee"
     first_name: Optional[str] = None 
-    last_name: Optional[str] = None  
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    job_title: Optional[str] = None
+    company: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    event_id: str
     event_title: Optional[str] = Field(None) 
     event_date: Optional[str] = None 
 
@@ -34,6 +40,12 @@ class EventUserListItem(BaseModel):
     first_name: Optional[str] = Field(None) 
     last_name: Optional[str] = Field(None)   
     role: str = Field(..., example="owner")
+    phone_number: Optional[str] = Field(None)
+    email: Optional[str] = Field(None)
+    job_title: Optional[str] = Field(None)
+    company: Optional[str] = Field(None)
+    city: Optional[str] = Field(None)
+    state: Optional[str] = Field(None)
 
     # class Config:
     #     populate_by_name = True

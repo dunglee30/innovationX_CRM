@@ -141,10 +141,16 @@ def put_sample_data():
             'GSI1_SK': f"USER#{user['user_id']}#{role.upper()}",
             'type': relation_types[role],
             'user_id': user['user_id'],
-            'event_id': event['event_id'],
             'role': role,
             'first_name': user['first_name'],
             'last_name': user['last_name'],
+            'phone_number': user['phone_number'],
+            'email': user['email'],
+            'job_title': user['job_title'],
+            'company': user['company'],
+            'city': user['city'],
+            'state': user['state'],
+            'event_id': event['event_id'],
             'event_title': event['title'],
             'event_date': event['start_at']
         })
