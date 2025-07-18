@@ -1,7 +1,7 @@
 # app/core/db_connection.py
 import boto3
 from botocore.exceptions import ClientError
-from app.core.config import DYNAMODB_ENDPOINT_URL, AWS_REGION
+from app.core.config import DYNAMODB_ENDPOINT_URL, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 
 class DynamoDBConnection:
     _instance = None
@@ -19,7 +19,9 @@ class DynamoDBConnection:
                 self.dynamodb_resource = boto3.resource(
                     'dynamodb',
                     region_name=AWS_REGION,
-                    endpoint_url=DYNAMODB_ENDPOINT_URL
+                    endpoint_url=DYNAMODB_ENDPOINT_URL,
+                    aws_access_key_id=AWS_ACCESS_KEY_ID,          
+                    aws_secret_access_key=AWS_SECRET_ACCESS_KEY 
                 )
                 self._is_initialized = True
                 print("DynamoDB connection initialized.")

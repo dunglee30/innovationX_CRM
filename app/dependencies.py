@@ -1,8 +1,8 @@
 # app/dependencies.py
 # Suitable for Python 3.9+
-from app.repositories.user_repository import UserRepository
-from app.repositories.event_repository import EventRepository
-from app.repositories.user_event_relations_repository import UserEventRelationsRepository
+from app.repositories.users_repository import UserRepository
+from app.repositories.events_repository import EventRepository
+from app.repositories.user_event_repository import UserEventRelationsRepository
 
 # Instantiate repositories here. FastAPI's Depends will provide these instances.
 user_repo_instance = UserRepository()

@@ -8,13 +8,29 @@ from dotenv import load_dotenv
 load_dotenv() # Load env vars here too for setup script
 DYNAMODB_ENDPOINT_URL = os.getenv('DYNAMODB_ENDPOINT_URL', 'http://localhost:8000')
 AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', 'AKIAIOSFODNN7EXAMPLE')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY')
+# ...
+
 USERS_TABLE_NAME = os.getenv('USERS_TABLE_NAME', 'Users')
 EVENTS_TABLE_NAME = os.getenv('EVENTS_TABLE_NAME', 'Events')
 USER_EVENT_RELATIONS_TABLE_NAME = os.getenv('USER_EVENT_RELATIONS_TABLE_NAME', 'UserEventRelations')
 
 # --- Boto3 Clients and Resources ---
-dynamodb_client = boto3.client('dynamodb', region_name=AWS_REGION, endpoint_url=DYNAMODB_ENDPOINT_URL)
-dynamodb_resource = boto3.resource('dynamodb', region_name=AWS_REGION, endpoint_url=DYNAMODB_ENDPOINT_URL)
+dynamodb_client = boto3.client(
+    'dynamodb',
+    region_name=AWS_REGION,
+    endpoint_url=DYNAMODB_ENDPOINT_URL,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
+dynamodb_resource = boto3.resource(
+    'dynamodb',
+    region_name=AWS_REGION,
+    endpoint_url=DYNAMODB_ENDPOINT_URL,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+)
 
 # --- Generic Table Creation Function ---
 def create_dynamodb_table(table_name, key_schema, attribute_definitions, global_secondary_indexes=None):
@@ -167,21 +183,21 @@ def put_sample_data():
         'PK': f"USER#{user_map['u1']['user_id']}", 'SK': f"EVENT#{event_map['e1']['event_id']}#OWNER",
         'GSI1_PK': f"EVENT#{event_map['e1']['event_id']}", 'GSI1_SK': f"USER#{user_map['u1']['user_id']}#OWNER",
         'type': 'EventOwnership', 'user_id': user_map['u1']['user_id'], 'event_id': event_map['e1']['event_id'], 'role': 'owner',
-        'username': user_map['u1']['username'], 'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
+        'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
         'event_title': event_map['e1']['title'], 'event_date': event_map['e1']['start_at'] # Use title and start_at
     })
     relations_table.put_item(Item={
         'PK': f"USER#{user_map['u1']['user_id']}", 'SK': f"EVENT#{event_map['e1']['event_id']}#HOST",
         'GSI1_PK': f"EVENT#{event_map['e1']['event_id']}", 'GSI1_SK': f"USER#{user_map['u1']['user_id']}#HOST",
         'type': 'EventHosting', 'user_id': user_map['u1']['user_id'], 'event_id': event_map['e1']['event_id'], 'role': 'host',
-        'username': user_map['u1']['username'], 'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
+        'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
         'event_title': event_map['e1']['title'], 'event_date': event_map['e1']['start_at']
     })
     relations_table.put_item(Item={
         'PK': f"USER#{user_map['u2']['user_id']}", 'SK': f"EVENT#{event_map['e1']['event_id']}#HOST",
         'GSI1_PK': f"EVENT#{event_map['e1']['event_id']}", 'GSI1_SK': f"USER#{user_map['u2']['user_id']}#HOST",
         'type': 'EventHosting', 'user_id': user_map['u2']['user_id'], 'event_id': event_map['e1']['event_id'], 'role': 'host',
-        'username': user_map['u2']['username'], 'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
+        'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
         'event_title': event_map['e1']['title'], 'event_date': event_map['e1']['start_at']
     })
 
@@ -190,14 +206,14 @@ def put_sample_data():
         'PK': f"USER#{user_map['u2']['user_id']}", 'SK': f"EVENT#{event_map['e2']['event_id']}#OWNER",
         'GSI1_PK': f"EVENT#{event_map['e2']['event_id']}", 'GSI1_SK': f"USER#{user_map['u2']['user_id']}#OWNER",
         'type': 'EventOwnership', 'user_id': user_map['u2']['user_id'], 'event_id': event_map['e2']['event_id'], 'role': 'owner',
-        'username': user_map['u2']['username'], 'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
+        'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
         'event_title': event_map['e2']['title'], 'event_date': event_map['e2']['start_at']
     })
     relations_table.put_item(Item={
         'PK': f"USER#{user_map['u2']['user_id']}", 'SK': f"EVENT#{event_map['e2']['event_id']}#HOST",
         'GSI1_PK': f"EVENT#{event_map['e2']['event_id']}", 'GSI1_SK': f"USER#{user_map['u2']['user_id']}#HOST",
         'type': 'EventHosting', 'user_id': user_map['u2']['user_id'], 'event_id': event_map['e2']['event_id'], 'role': 'host',
-        'username': user_map['u2']['username'], 'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
+        'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
         'event_title': event_map['e2']['title'], 'event_date': event_map['e2']['start_at']
     })
 
@@ -206,14 +222,14 @@ def put_sample_data():
         'PK': f"USER#{user_map['u1']['user_id']}", 'SK': f"EVENT#{event_map['e3']['event_id']}#OWNER",
         'GSI1_PK': f"EVENT#{event_map['e3']['event_id']}", 'GSI1_SK': f"USER#{user_map['u1']['user_id']}#OWNER",
         'type': 'EventOwnership', 'user_id': user_map['u1']['user_id'], 'event_id': event_map['e3']['event_id'], 'role': 'owner',
-        'username': user_map['u1']['username'], 'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
+        'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
         'event_title': event_map['e3']['title'], 'event_date': event_map['e3']['start_at']
     })
     relations_table.put_item(Item={
         'PK': f"USER#{user_map['u3']['user_id']}", 'SK': f"EVENT#{event_map['e3']['event_id']}#HOST",
         'GSI1_PK': f"EVENT#{event_map['e3']['event_id']}", 'GSI1_SK': f"USER#{user_map['u3']['user_id']}#HOST",
         'type': 'EventHosting', 'user_id': user_map['u3']['user_id'], 'event_id': event_map['e3']['event_id'], 'role': 'host',
-        'username': user_map['u3']['username'], 'first_name': user_map['u3']['first_name'], 'last_name': user_map['u3']['last_name'],
+        'first_name': user_map['u3']['first_name'], 'last_name': user_map['u3']['last_name'],
         'event_title': event_map['e3']['title'], 'event_date': event_map['e3']['start_at']
     })
     print("Inserted relations data into UserEventRelations table.")

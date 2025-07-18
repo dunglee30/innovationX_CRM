@@ -2,7 +2,7 @@
 # Suitable for Python 3.9+
 from fastapi import FastAPI
 from app.core.config import API_TITLE, API_DESCRIPTION, API_VERSION
-from app.routers import user_router, event_router # Import routers
+from app.routers import event_router, user_router # Import routers
 
 # --- FastAPI App Initialization ---
 app = FastAPI(

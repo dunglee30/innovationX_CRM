@@ -1,11 +1,11 @@
-# app/routers/event_router.py
+# app/routers/events_router.py
 # Suitable for Python 3.9+
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List # Use typing.List for Python 3.9 compatibility
-from app.models.event import Event
-from app.models.relation import EventUserListItem
-from app.repositories.event_repository import EventRepository
-from app.repositories.user_event_relations_repository import UserEventRelationsRepository
+from app.models.events import Event
+from app.models.user_event import EventUserListItem
+from app.repositories.events_repository import EventRepository
+from app.repositories.user_event_repository import UserEventRelationsRepository
 from app.dependencies import get_event_repo, get_user_event_relations_repo
 from botocore.exceptions import ClientError
 

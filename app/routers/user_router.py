@@ -1,11 +1,11 @@
-# app/routers/user_router.py
+# app/routers/users_router.py
 # Suitable for Python 3.9+
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List # Use typing.List for Python 3.9 compatibility
-from app.models.user import User
-from app.models.relation import UserEventListItem
-from app.repositories.user_repository import UserRepository
-from app.repositories.user_event_relations_repository import UserEventRelationsRepository
+from app.models.users import User
+from app.models.user_event import UserEventListItem
+from app.repositories.users_repository import UserRepository
+from app.repositories.user_event_repository import UserEventRelationsRepository
 from app.dependencies import get_user_repo, get_user_event_relations_repo
 from botocore.exceptions import ClientError
 
