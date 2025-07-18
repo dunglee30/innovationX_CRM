@@ -1,5 +1,5 @@
 # app/routers/users_router.py
-# Suitable for Python 3.9+
+
 from fastapi import APIRouter, Depends, HTTPException
 from typing import List # Use typing.List for Python 3.9 compatibility
 from app.models.users import User

@@ -1,5 +1,5 @@
 # app/models/event.py
-# Suitable for Python 3.9+
+
 from pydantic import BaseModel, Field
 from typing import Optional, List # Use typing.Optional and typing.List for Python 3.9 compatibility
 

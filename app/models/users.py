@@ -1,5 +1,5 @@
 # app/models/user.py
-# Suitable for Python 3.9+
+
 from pydantic import BaseModel, Field
 from typing import Optional # Use typing.Optional for Python 3.9 compatibility
 

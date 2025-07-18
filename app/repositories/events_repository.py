@@ -1,6 +1,7 @@
 # app/repositories/event_repository.py
 from app.repositories.base_repository import BaseRepository
 from typing import Dict, Any, Optional
+from botocore.exceptions import ClientError
 
 class EventRepository(BaseRepository):
     def __init__(self):

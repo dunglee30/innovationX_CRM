@@ -1,5 +1,5 @@
 # app/dependencies.py
-# Suitable for Python 3.9+
+
 from app.repositories.users_repository import UserRepository
 from app.repositories.events_repository import EventRepository
 from app.repositories.user_event_repository import UserEventRelationsRepository

@@ -1,8 +1,9 @@
 # app/repositories/user_event_relations_repository.py
-# Suitable for Python 3.9+
+
 from app.repositories.base_repository import BaseRepository
 import boto3
 from typing import Dict, Any, List # Use typing.Dict, typing.Any, and typing.List for Python 3.9 compatibility
+from botocore.exceptions import ClientError
 
 class UserEventRelationsRepository(BaseRepository):
     def __init__(self):
