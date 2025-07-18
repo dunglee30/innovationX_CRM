@@ -6,6 +6,7 @@ from app.models.user_event import EventUserListItem  # Import EventUserListItem
 
 import boto3
 from botocore.exceptions import ClientError
+from boto3.dynamodb.conditions import Attr
 from typing import Dict, Any, List 
 import logging
 from collections import Counter
@@ -52,12 +53,14 @@ class UserEventRelationsRepository(BaseRepository):
     def get_event_users_by_role_and_min_events(self, role: str, min_events: int) -> List[EventUserListItem]:
         """
         Returns EventUserListItem objects for users with the given role who have hosted at least min_events events.
+        Optimized: Scan for items where role matches and SK ends with the role (e.g., HOST).
         """
         try:
             logger.debug(f"Fetching relations for role: {role}")
-            response = self.table.scan(
-                FilterExpression=boto3.dynamodb.conditions.Attr('role').eq(role)
-            )
+            scan_kwargs = {
+                "FilterExpression": Attr('role').eq(role) & Attr('SK').begins_with(f"EVENT#") & Attr('SK').contains(role.upper())
+            }
+            response = self.table.scan(**scan_kwargs)
             logger.debug(f"Raw DynamoDB scan response for role '{role}': {response}")
             relations = response.get('Items', [])
             user_event_counts = Counter(rel.get('user_id') for rel in relations if 'user_id' in rel)
@@ -69,10 +72,9 @@ class UserEventRelationsRepository(BaseRepository):
                 user_id = rel.get('user_id')
                 if user_id in filtered_user_ids and user_id not in seen:
                     seen.add(user_id)
-                    user_data = {k: v for k, v in rel.items() if k in EventUserListItem.__fields__}
-                    user_data['user_id'] = user_id  # Ensure user_id is present
                     users.append(EventUserListItem(**rel))
             return users
         except Exception as e:
-            logger.error(f"Error in get_event_users_by_role_and_min_events: {e}")
+            import traceback
+            logger.error(f"Error in get_event_users_by_role_and_min_events: {e}\nTraceback: {traceback.format_exc()}")
             raise RuntimeError(f"Failed to retrieve users with role '{role}' and hosted event count >= {min_events}: {e}")

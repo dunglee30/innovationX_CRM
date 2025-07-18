@@ -76,7 +76,7 @@ async def get_users_by_role_event_count(
     Retrieves users who have hosted at least min_events events.
     """
     try:
-        users = relations_repo.get_event_users_by_role_and_min_events(min_events, role)
+        users = relations_repo.get_event_users_by_role_and_min_events(role=role, min_events=min_events)
         if not users:
             raise HTTPException(status_code=404, detail=f"No users found with at least {min_events} hosted events.")
         return users
