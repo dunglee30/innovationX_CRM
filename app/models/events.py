@@ -12,8 +12,6 @@ class Event(BaseModel):
     end_at: str = Field(..., example="2025-08-01T12:00:00Z", description="End date and time of the event (ISO 8601 format).")
     venue: str = Field(..., example="Online via Zoom", description="Location or platform where the event takes place.")
     max_capacity: Optional[int] = Field(None, example=100, description="Maximum number of attendees for the event.")
-    owner_id: str = Field(..., example="u1", description="ID of the user who owns/created the event.")
-    host_ids: List[str] = Field(..., example=["u1", "u2"], description="List of user IDs who are hosts for the event.")
 
     # class Config:
     #     populate_by_name = True

@@ -91,151 +91,7 @@ def put_sample_data():
     events_table = dynamodb_resource.Table(EVENTS_TABLE_NAME)
     relations_table = dynamodb_resource.Table(USER_EVENT_RELATIONS_TABLE_NAME)
 
-    users_data = [
-        {
-            'user_id': 'u1',
-            'first_name': 'Alice',
-            'last_name': 'Smith',
-            'phone_number': '+84901234567',
-            'email': 'alice@example.com',
-            'avatar': 'https://example.com/avatars/alice.jpg',
-            'gender': 'Female',
-            'job_title': 'Lead Software Engineer',
-            'company': 'Innovate Solutions',
-            'city': 'Ho Chi Minh City',
-            'state': 'Ho Chi Minh'
-        },
-        {
-            'user_id': 'u2',
-            'first_name': 'Bob',
-            'last_name': 'Johnson',
-            'phone_number': '+84912345678',
-            'email': 'bob@example.com',
-            'avatar': 'https://example.com/avatars/bob.jpg',
-            'gender': 'Male',
-            'job_title': 'Cloud Architect',
-            'company': 'Global Tech Co',
-            'city': 'Hanoi',
-            'state': 'Hanoi'
-        },
-        {
-            'user_id': 'u3',
-            'first_name': 'Charlie',
-            'last_name': 'Brown',
-            'phone_number': '+84923456789',
-            'email': 'charlie@example.com',
-            'avatar': 'https://example.com/avatars/charlie.jpg',
-            'gender': 'Male',
-            'job_title': 'Data Analyst',
-            'company': 'Data Insights',
-            'city': 'Da Nang',
-            'state': 'Da Nang'
-        }
-    ]
-    for user in users_data: users_table.put_item(Item=user)
-    print(f"Inserted {len(users_data)} users.")
-
-    events_data = [
-        {
-            'event_id': 'e1',
-            'slug': 'fastapi-basics-workshop',
-            'title': 'FastAPI Basics Workshop',
-            'description': 'An interactive workshop covering the fundamentals of FastAPI.',
-            'start_at': '2025-08-01T10:00:00Z',
-            'end_at': '2025-08-01T12:00:00Z',
-            'venue': 'Online (Zoom Link Provided)',
-            'max_capacity': 100,
-            'owner_id': 'u1',
-            'host_ids': ['u1', 'u2']
-        },
-        {
-            'event_id': 'e2',
-            'slug': 'advanced-dynamodb-deep-dive',
-            'title': 'Advanced DynamoDB Deep Dive',
-            'description': 'Explore advanced data modeling and optimization techniques in DynamoDB.',
-            'start_at': '2025-08-15T09:00:00Z',
-            'end_at': '2025-08-15T17:00:00Z',
-            'venue': 'Saigon Exhibition and Convention Center',
-            'max_capacity': 500,
-            'owner_id': 'u2',
-            'host_ids': ['u2']
-        },
-        {
-            'event_id': 'e3',
-            'slug': 'python-web-dev-meetup-september',
-            'title': 'Python Web Dev Meetup - September Edition',
-            'description': 'Monthly gathering for Python web developers to share knowledge and network.',
-            'start_at': '2025-09-01T18:30:00Z',
-            'end_at': '2025-09-01T20:30:00Z',
-            'venue': 'Local Cafe, District 1',
-            'max_capacity': 50,
-            'owner_id': 'u1',
-            'host_ids': ['u3']
-        }
-    ]
-    for event in events_data: events_table.put_item(Item=event)
-    print(f"Inserted {len(events_data)} events.")
-
-    user_map = {u['user_id']: u for u in users_data}
-    event_map = {e['event_id']: e for e in events_data}
-
-    # Relations for Event e1
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u1']['user_id']}", 'SK': f"EVENT#{event_map['e1']['event_id']}#OWNER",
-        'GSI1_PK': f"EVENT#{event_map['e1']['event_id']}", 'GSI1_SK': f"USER#{user_map['u1']['user_id']}#OWNER",
-        'type': 'EventOwnership', 'user_id': user_map['u1']['user_id'], 'event_id': event_map['e1']['event_id'], 'role': 'owner',
-        'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
-        'event_title': event_map['e1']['title'], 'event_date': event_map['e1']['start_at'] # Use title and start_at
-    })
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u1']['user_id']}", 'SK': f"EVENT#{event_map['e1']['event_id']}#HOST",
-        'GSI1_PK': f"EVENT#{event_map['e1']['event_id']}", 'GSI1_SK': f"USER#{user_map['u1']['user_id']}#HOST",
-        'type': 'EventHosting', 'user_id': user_map['u1']['user_id'], 'event_id': event_map['e1']['event_id'], 'role': 'host',
-        'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
-        'event_title': event_map['e1']['title'], 'event_date': event_map['e1']['start_at']
-    })
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u2']['user_id']}", 'SK': f"EVENT#{event_map['e1']['event_id']}#HOST",
-        'GSI1_PK': f"EVENT#{event_map['e1']['event_id']}", 'GSI1_SK': f"USER#{user_map['u2']['user_id']}#HOST",
-        'type': 'EventHosting', 'user_id': user_map['u2']['user_id'], 'event_id': event_map['e1']['event_id'], 'role': 'host',
-        'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
-        'event_title': event_map['e1']['title'], 'event_date': event_map['e1']['start_at']
-    })
-
-    # Relations for Event e2
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u2']['user_id']}", 'SK': f"EVENT#{event_map['e2']['event_id']}#OWNER",
-        'GSI1_PK': f"EVENT#{event_map['e2']['event_id']}", 'GSI1_SK': f"USER#{user_map['u2']['user_id']}#OWNER",
-        'type': 'EventOwnership', 'user_id': user_map['u2']['user_id'], 'event_id': event_map['e2']['event_id'], 'role': 'owner',
-        'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
-        'event_title': event_map['e2']['title'], 'event_date': event_map['e2']['start_at']
-    })
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u2']['user_id']}", 'SK': f"EVENT#{event_map['e2']['event_id']}#HOST",
-        'GSI1_PK': f"EVENT#{event_map['e2']['event_id']}", 'GSI1_SK': f"USER#{user_map['u2']['user_id']}#HOST",
-        'type': 'EventHosting', 'user_id': user_map['u2']['user_id'], 'event_id': event_map['e2']['event_id'], 'role': 'host',
-        'first_name': user_map['u2']['first_name'], 'last_name': user_map['u2']['last_name'],
-        'event_title': event_map['e2']['title'], 'event_date': event_map['e2']['start_at']
-    })
-
-    # Relations for Event e3
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u1']['user_id']}", 'SK': f"EVENT#{event_map['e3']['event_id']}#OWNER",
-        'GSI1_PK': f"EVENT#{event_map['e3']['event_id']}", 'GSI1_SK': f"USER#{user_map['u1']['user_id']}#OWNER",
-        'type': 'EventOwnership', 'user_id': user_map['u1']['user_id'], 'event_id': event_map['e3']['event_id'], 'role': 'owner',
-        'first_name': user_map['u1']['first_name'], 'last_name': user_map['u1']['last_name'],
-        'event_title': event_map['e3']['title'], 'event_date': event_map['e3']['start_at']
-    })
-    relations_table.put_item(Item={
-        'PK': f"USER#{user_map['u3']['user_id']}", 'SK': f"EVENT#{event_map['e3']['event_id']}#HOST",
-        'GSI1_PK': f"EVENT#{event_map['e3']['event_id']}", 'GSI1_SK': f"USER#{user_map['u3']['user_id']}#HOST",
-        'type': 'EventHosting', 'user_id': user_map['u3']['user_id'], 'event_id': event_map['e3']['event_id'], 'role': 'host',
-        'first_name': user_map['u3']['first_name'], 'last_name': user_map['u3']['last_name'],
-        'event_title': event_map['e3']['title'], 'event_date': event_map['e3']['start_at']
-    })
-    print("Inserted relations data into UserEventRelations table.")
-
-    # --- NEW SAMPLE DATA ---
+    # --- SAMPLE DATA ---
     new_users_data = [
         {
             'user_id': f'u{n}',
@@ -245,11 +101,11 @@ def put_sample_data():
             'email': f'user{n}@example.com',
             'avatar': f'https://example.com/avatars/user{n}.jpg',
             'gender': 'Male' if n % 2 == 0 else 'Female',
-            'job_title': f'Job Title {n}',
-            'company': f'Company {n}',
+            'job_title': f'Job Title {random.choice(range(1, 4))}',
+            'company': f'Company {random.choice(range(1, 4))}',
             'city': f'City {n}',
             'state': f'State {n}'
-        } for n in range(4, 14)
+        } for n in range(1, 40)  # Create 40 new users
     ]
     for user in new_users_data:
         users_table.put_item(Item=user)
@@ -265,22 +121,16 @@ def put_sample_data():
             'end_at': f'2025-10-{n:02d}T12:00:00Z',
             'venue': f'Venue {n}',
             'max_capacity': 50 + n * 10,
-            'owner_id': f'u{4 + (n % 10)}',
-            'host_ids': [f'u{4 + ((n+1) % 10)}', f'u{4 + ((n+2) % 10)}']
-        } for n in range(4, 14)
+        } for n in range(1, 21)  # Create 20 new events
     ]
     for event in new_events_data:
         events_table.put_item(Item=event)
     print(f"Inserted {len(new_events_data)} new events.")
 
-    # Create user/event maps for new data
-    new_user_map = {u['user_id']: u for u in new_users_data}
-    new_event_map = {e['event_id']: e for e in new_events_data}
-
-    roles = ['owner', 'host']
-    relation_types = {'owner': 'EventOwnership', 'host': 'EventHosting'}
+    roles = ['attendee', 'host']
+    relation_types = {'host': 'EventHosting', 'attendee': 'EventAttendance'}
     relations = []
-    for i in range(25):
+    for i in range(150):  # Create 100 relations
         user = random.choice(new_users_data)
         event = random.choice(new_events_data)
         role = random.choice(roles)
