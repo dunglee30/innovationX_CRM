@@ -1,28 +1,21 @@
-import uvicorn
+# app/main.py
+# Suitable for Python 3.9+
 from fastapi import FastAPI
+from app.core.config import API_TITLE, API_DESCRIPTION, API_VERSION
+from app.routers import user_router, event_router # Import routers
 
-from app.internal.db import initialize_db
+# --- FastAPI App Initialization ---
+app = FastAPI(
+    title=API_TITLE,
+    description=API_DESCRIPTION,
+    version=API_VERSION
+)
 
-from app.domain.recipes import RecipesDomain
-from app.repository.recipes import RecipesRepository
-from app.routers.recipes import RecipesRouter
+# --- Include Routers ---
+app.include_router(user_router.router)
+app.include_router(event_router.router)
 
-app = FastAPI()
-
-
-db = initialize_db()
-
-
-recipes_repository = RecipesRepository(db)
-recipes_domain = RecipesDomain(recipes_repository)
-recipes_router = RecipesRouter(recipes_domain)
-
-app.include_router(recipes_router.router)
-
-
-@app.get('/')
-def index():
-    return 'Hello World!'
-
-if __name__ == '__main__':
-    uvicorn.run("app.main:app", host="0.0.0.0", port=5000, log_level="info", reload=True)
+# --- Root Endpoint ---
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the User and Event Management API!"}

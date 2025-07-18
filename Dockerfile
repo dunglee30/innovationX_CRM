@@ -1,20 +1,20 @@
-# Base image
+# Use a slim Python 3.9 image as base
 FROM python:3.9
 
-LABEL dunglee30 "work.ducdungle@gmail.com"
-
-# Set environment varibles
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
+# Set the working directory in the container
 WORKDIR /app
 
-COPY requirements.txt /app/requirements.txt
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install -r /app/requirements.txt
+# Copy the entire application code
+# This includes the 'app' directory, '.env', and 'db_setup.py'
+COPY . .
 
-COPY . /app
+# Expose the port FastAPI will run on
+EXPOSE 8000
 
-EXPOSE 80
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
+# Command to run the FastAPI application using Uvicorn
+# The --host 0.0.0.0 is crucial for allowing access from outside the container
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

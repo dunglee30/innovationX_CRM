@@ -1,34 +1,55 @@
 version: '3.8'
-services:
-  app:
-    build: 
-      context: .
-      dockerfile: fastapi/Dockerfile
-    volumes:
-      - "./fastapi:/app"
-    ports:
-      - "5000:5000"
-    depends_on: 
-      - db
-  db:
-    image: amazon/dynamodb-local
-    restart: unless-stopped
-    ports:
-      - 8000:8000
-  admin:
-    build:
-      context: .
-      dockerfile: admin.Dockerfile
-    ports:
-    - 8001:8001
-    environment:
-      - DYNAMO_ENDPOINT=http://db:8000
-      - AWS_REGION=example
-      - AWS_ACCESS_KEY_ID=example
-      - AWS_SECRET_ACCESS_KEY=example
-    depends_on:
-      - db
 
-networks:
-  fastapi_network:
-    driver: bridge
+services:
+  # DynamoDB Local Service
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000" # Map DynamoDB's default port 8000
+    # Optional: Persist data to a local volume
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/home/dynamodblocal/data"]
+    healthcheck: # Ensure DynamoDB is ready before proceeding
+      test: ["CMD-SHELL", "curl -f http://localhost:8000 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Database Initialization Service
+  db-init:
+    build: . # Build from the current directory's Dockerfile
+    container_name: db-init
+    depends_on:
+      dynamodb-local:
+        condition: service_healthy # Wait for DynamoDB to be healthy
+    environment:
+      # Pass environment variables needed for db_setup.py
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000 # Use service name as hostname
+      - AWS_REGION=${AWS_REGION} # From .env
+      - USERS_TABLE_NAME=${USERS_TABLE_NAME} # From .env
+      - EVENTS_TABLE_NAME=${EVENTS_TABLE_NAME} # From .env
+      - USER_EVENT_RELATIONS_TABLE_NAME=${USER_EVENT_RELATIONS_TABLE_NAME} # From .env
+    command: python db_setup.py # Run the setup script
+    restart: "no" # Ensure this container does not restart after completion
+
+  # FastAPI Application Service
+  api:
+    build: . # Build from the current directory's Dockerfile
+    container_name: fastapi_api
+    ports:
+      - "8001:8000" # Map host port 8001 to container port 8000 (FastAPI default)
+    depends_on:
+      db-init:
+        condition: service_completed_successfully # Wait for DB setup to finish
+    env_file:
+      - .env # Load environment variables from the .env file
+    environment:
+      # Override DYNAMODB_ENDPOINT_URL to point to the dynamodb-local service
+      - DYNAMODB_ENDPOINT_URL=http://dynamodb-local:8000
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# Define named volume for persistent DynamoDB data
+volumes:
+  dynamodb_data:
