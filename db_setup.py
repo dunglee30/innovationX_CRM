@@ -2,6 +2,7 @@
 import boto3
 from botocore.exceptions import ClientError
 import os
+import random
 from dotenv import load_dotenv
 
 # --- Configuration ---
@@ -234,7 +235,91 @@ def put_sample_data():
     })
     print("Inserted relations data into UserEventRelations table.")
 
+    # --- NEW SAMPLE DATA ---
+    new_users_data = [
+        {
+            'user_id': f'u{n}',
+            'first_name': f'User{n}',
+            'last_name': f'Last{n}',
+            'phone_number': f'+849000000{n:02d}',
+            'email': f'user{n}@example.com',
+            'avatar': f'https://example.com/avatars/user{n}.jpg',
+            'gender': 'Male' if n % 2 == 0 else 'Female',
+            'job_title': f'Job Title {n}',
+            'company': f'Company {n}',
+            'city': f'City {n}',
+            'state': f'State {n}'
+        } for n in range(4, 14)
+    ]
+    for user in new_users_data:
+        users_table.put_item(Item=user)
+    print(f"Inserted {len(new_users_data)} new users.")
+
+    new_events_data = [
+        {
+            'event_id': f'e{n}',
+            'slug': f'event-{n}-slug',
+            'title': f'Event Title {n}',
+            'description': f'Description for event {n}',
+            'start_at': f'2025-10-{n:02d}T10:00:00Z',
+            'end_at': f'2025-10-{n:02d}T12:00:00Z',
+            'venue': f'Venue {n}',
+            'max_capacity': 50 + n * 10,
+            'owner_id': f'u{4 + (n % 10)}',
+            'host_ids': [f'u{4 + ((n+1) % 10)}', f'u{4 + ((n+2) % 10)}']
+        } for n in range(4, 14)
+    ]
+    for event in new_events_data:
+        events_table.put_item(Item=event)
+    print(f"Inserted {len(new_events_data)} new events.")
+
+    # Create user/event maps for new data
+    new_user_map = {u['user_id']: u for u in new_users_data}
+    new_event_map = {e['event_id']: e for e in new_events_data}
+
+    roles = ['owner', 'host']
+    relation_types = {'owner': 'EventOwnership', 'host': 'EventHosting'}
+    relations = []
+    for i in range(25):
+        user = random.choice(new_users_data)
+        event = random.choice(new_events_data)
+        role = random.choice(roles)
+        relations.append({
+            'PK': f"USER#{user['user_id']}",
+            'SK': f"EVENT#{event['event_id']}#{role.upper()}",
+            'GSI1_PK': f"EVENT#{event['event_id']}",
+            'GSI1_SK': f"USER#{user['user_id']}#{role.upper()}",
+            'type': relation_types[role],
+            'user_id': user['user_id'],
+            'event_id': event['event_id'],
+            'role': role,
+            'first_name': user['first_name'],
+            'last_name': user['last_name'],
+            'event_title': event['title'],
+            'event_date': event['start_at']
+        })
+    for rel in relations:
+        relations_table.put_item(Item=rel)
+    print(f"Inserted {len(relations)} new relations.")
+
+def delete_table_if_exists(table_name):
+    try:
+        existing_tables = dynamodb_client.list_tables()['TableNames']
+        if table_name in existing_tables:
+            print(f"Deleting table: {table_name}")
+            dynamodb_client.delete_table(TableName=table_name)
+            # Wait for deletion to complete
+            waiter = dynamodb_client.get_waiter('table_not_exists')
+            waiter.wait(TableName=table_name)
+            print(f"Table '{table_name}' deleted.")
+    except Exception as e:
+        print(f"Error deleting table {table_name}: {e}")
+
 if __name__ == '__main__':
+    # Drop all tables before creating new ones
+    delete_table_if_exists(USERS_TABLE_NAME)
+    delete_table_if_exists(EVENTS_TABLE_NAME)
+    delete_table_if_exists(USER_EVENT_RELATIONS_TABLE_NAME)
     create_all_tables()
     put_sample_data()
     print("\nDynamoDB table setup and data insertion complete.")

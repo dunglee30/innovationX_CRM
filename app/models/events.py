@@ -1,7 +1,7 @@
 # app/models/event.py
 
 from pydantic import BaseModel, Field
-from typing import Optional, List # Use typing.Optional and typing.List for Python 3.9 compatibility
+from typing import Optional, List 
 
 class Event(BaseModel):
     event_id: str = Field(..., example="e1", description="Unique identifier for the event.")

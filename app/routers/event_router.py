@@ -1,7 +1,7 @@
 # app/routers/events_router.py
 
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List # Use typing.List for Python 3.9 compatibility
+from typing import List 
 from app.models.events import Event
 from app.models.user_event import EventUserListItem
 from app.repositories.events_repository import EventRepository

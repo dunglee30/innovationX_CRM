@@ -1,7 +1,7 @@
 # app/routers/users_router.py
 
-from fastapi import APIRouter, Depends, HTTPException
-from typing import List # Use typing.List for Python 3.9 compatibility
+from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import List
 from app.models.users import User
 from app.models.user_event import UserEventListItem
 from app.repositories.users_repository import UserRepository
@@ -29,6 +29,74 @@ async def get_user(user_id: str, repo: UserRepository = Depends(get_user_repo)):
         if not user_data:
             raise HTTPException(status_code=404, detail=f"User with ID '{user_id}' not found.")
         return User(**user_data)
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
+
+@router.get(
+    "/users/by_company",
+    response_model=List[User],
+    summary="Get User by Company",
+    description="Retrieves a user's profile by company name from the 'Users' table.",
+)
+async def get_user_by_company(
+    company: str = Query(...),
+    repo: UserRepository = Depends(get_user_repo)
+):
+    """
+    Retrieves a user's profile by company name.
+    """
+    try:
+        user_data_list = repo.get_user_by_company(company)
+        if not user_data_list:
+            raise HTTPException(status_code=404, detail=f"No user found for company '{company}'.")
+        return [User(**user) for user in user_data_list]
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
+
+@router.get(
+    "/users/by_job_title",
+    response_model=List[User],
+    summary="Get User by Job Title",
+    description="Retrieves a user's profile by job title from the 'Users' table.",
+)
+async def get_user_by_job_title(
+    job_title: str = Query(...),
+    repo: UserRepository = Depends(get_user_repo)
+):
+    """Retrieves a user's profile by job title.
+    """
+    try:
+        user_data_list = repo.get_user_by_job_title(job_title)
+        if not user_data_list:
+            raise HTTPException(status_code=404, detail=f"No user found with job title '{job_title}'.")
+        return [User(**user) for user in user_data_list]
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}") 
+
+@router.get(
+    "/users/by_city_and_state",
+    response_model=List[User],
+    summary="Get User by City and State",
+    description="Retrieves a user's profile by city and state from the 'Users' table.",
+)
+async def get_user_by_city_and_state(
+    city: str = Query(...),
+    state: str = Query(...),
+    repo: UserRepository = Depends(get_user_repo)
+):
+    """Retrieves a user's profile by city and state.
+    """
+    try:
+        user_data_list = repo.get_user_by_City_and_State(city, state)
+        if not user_data_list:
+            raise HTTPException(status_code=404, detail=f"No user found in {city}, {state}.")
+        return [User(**user) for user in user_data_list]
     except ClientError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
     except Exception as e:

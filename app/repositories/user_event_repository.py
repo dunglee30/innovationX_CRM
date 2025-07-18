@@ -2,8 +2,7 @@
 
 from app.repositories.base_repository import BaseRepository
 import boto3
-from typing import Dict, Any, List # Use typing.Dict, typing.Any, and typing.List for Python 3.9 compatibility
-from botocore.exceptions import ClientError
+from typing import Dict, Any, List 
 
 class UserEventRelationsRepository(BaseRepository):
     def __init__(self):

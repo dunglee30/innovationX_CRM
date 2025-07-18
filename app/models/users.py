@@ -1,7 +1,7 @@
 # app/models/user.py
 
 from pydantic import BaseModel, Field
-from typing import Optional # Use typing.Optional for Python 3.9 compatibility
+from typing import Optional 
 
 class User(BaseModel):
     user_id: str = Field(..., example="u1", description="Unique identifier for the user.")
