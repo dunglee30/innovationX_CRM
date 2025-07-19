@@ -11,51 +11,77 @@ This is the repository for a CRM built by InnovationX.
 ## Data Model Details
 
 ### Users Table
-- **user_id** (string, PK): Unique identifier for the user
-- **first_name** (string): User's first name
-- **last_name** (string): User's last name
-- **phone_number** (string): User's phone number
-- **email** (string): User's email address (unique)
-- **avatar** (string, optional): URL to the user's avatar image
-- **gender** (string, optional): User's gender
-- **job_title** (string, optional): User's job title
-- **company** (string, optional): User's company
-- **city** (string, optional): User's current city
-- **state** (string, optional): User's current state/province
+| Field        | Type     | Description                                 |
+|-------------|----------|---------------------------------------------|
+| user_id     | string   | Unique identifier for the user               |
+| first_name  | string   | User's first name                           |
+| last_name   | string   | User's last name                            |
+| phone_number| string   | User's phone number                         |
+| email       | string   | User's email address (unique)               |
+| avatar      | string   | URL to the user's avatar image (optional)   |
+| gender      | string   | User's gender (optional)                    |
+| job_title   | string   | User's job title (optional)                 |
+| company     | string   | User's company (optional)                   |
+| city        | string   | User's current city (optional)              |
+| state       | string   | User's current state/province (optional)    |
 
 ### Events Table
-- **event_id** (string, PK): Unique identifier for the event
-- **slug** (string): URL-friendly identifier for the event
-- **title** (string): Title of the event
-- **description** (string, optional): Detailed description of the event
-- **start_at** (string): Start date and time of the event (ISO 8601 format)
-- **end_at** (string): End date and time of the event (ISO 8601 format)
-- **venue** (string): Location or platform where the event takes place
-- **max_capacity** (int, optional): Maximum number of attendees for the event
+| Field        | Type     | Description                                 |
+|-------------|----------|---------------------------------------------|
+| event_id    | string   | Unique identifier for the event              |
+| slug        | string   | URL-friendly identifier for the event        |
+| title       | string   | Title of the event                           |
+| description | string   | Detailed description of the event (optional) |
+| start_at    | string   | Start date and time (ISO 8601 format)        |
+| end_at      | string   | End date and time (ISO 8601 format)          |
+| venue       | string   | Location or platform                         |
+| max_capacity| int      | Maximum number of attendees (optional)       |
 
 ### UserEventRelations Table
-- **PK** (string): Partition key
-- **SK** (string): Sort key
-- **GSI1_PK** (string): Global secondary index partition key
-- **GSI1_SK** (string): Global secondary index sort key
-- **type** (string): Relation type (e.g., "EventOwnership", "EventHosting")
-- **user_id** (string): Linked user
-- **role** (string): Role in event (owner, host, attendee)
-- **first_name** (string, optional): User's first name
-- **last_name** (string, optional): User's last name
-- **phone_number** (string, optional): User's phone number
-- **email** (string, optional): User's email address
-- **job_title** (string, optional): User's job title
-- **company** (string, optional): User's company
-- **city** (string, optional): User's city
-- **state** (string, optional): User's state/province
-- **event_id** (string): Linked event
-- **event_title** (string, optional): Event title
-- **event_date** (string, optional): Event date
+| Field        | Type     | Description                                 |
+|-------------|----------|---------------------------------------------|
+| PK          | string   | Partition key                               |
+| SK          | string   | Sort key                                    |
+| GSI1_PK     | string   | Global secondary index partition key         |
+| GSI1_SK     | string   | Global secondary index sort key              |
+| type        | string   | Relation type (e.g., "EventOwnership")      |
+| user_id     | string   | Linked user                                 |
+| role        | string   | Role in event (owner, host, attendee)        |
+| first_name  | string   | User's first name (optional)                 |
+| last_name   | string   | User's last name (optional)                  |
+| phone_number| string   | User's phone number (optional)               |
+| email       | string   | User's email address (optional)              |
+| job_title   | string   | User's job title (optional)                  |
+| company     | string   | User's company (optional)                    |
+| city        | string   | User's city (optional)                       |
+| state       | string   | User's state/province (optional)             |
+| event_id    | string   | Linked event                                 |
+| event_title | string   | Event title (optional)                       |
+| event_date  | string   | Event date (optional)                        |
 
 #### List Item Models
-- **UserEventListItem**: event_id, event_title, role, event_date
-- **EventUserListItem**: user_id, first_name, last_name, role, phone_number, email, job_title, company, city, state
+
+**UserEventListItem**
+| Field       | Type   | Description                |
+|-------------|--------|----------------------------|
+| event_id    | string | Event identifier           |
+| event_title | string | Event title                |
+| role        | string | Role in event              |
+| event_date  | string | Event date (optional)      |
+
+**EventUserListItem**
+| Field       | Type   | Description                |
+|-------------|--------|----------------------------|
+| user_id     | string | User identifier            |
+| first_name  | string | User's first name (optional)|
+| last_name   | string | User's last name (optional) |
+| role        | string | Role in event              |
+| phone_number| string | User's phone number (optional)|
+| email       | string | User's email (optional)    |
+| job_title   | string | User's job title (optional)|
+| company     | string | User's company (optional)  |
+| city        | string | User's city (optional)     |
+| state       | string | User's state (optional)    |
 
 ## Entity Relationships
 - One user can host or attend many events
