@@ -11,6 +11,7 @@ from app.dependencies import get_user_repo, get_user_event_relations_repo
 from app.utils.pagination import paginate_dynamodb_response
 from botocore.exceptions import ClientError, ParamValidationError
 from app.utils.filter_request import FilterQueryRequest
+from app.utils.email import send_email
 import logging
 
 uvicorn_logger = logging.getLogger('uvicorn.error')
@@ -24,36 +25,6 @@ router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
-
-@router.get(
-    "/by_role_event_count",
-    response_model=List[EventUserListItem],
-    summary="Get Users by Hosted Event Count",
-    description="Retrieves users who have hosted at least the specified number of events.",
-)
-async def get_users_by_role_event_count(
-    min_events: int = Query(1, description="Minimum number of hosted events"),
-    role: str = Query("host", description="Role to filter users by"),
-    relations_repo: UserEventRelationsRepository = Depends(get_user_event_relations_repo)
-):
-    """
-    Retrieves users who have hosted at least min_events events.
-    """
-    try:
-        logger.debug(f"Querying for users with role '{role}' and at least {min_events} hosted events.")
-        users = relations_repo.get_event_users_by_role_and_min_events(role=role, min_events=min_events)
-        if not users or len(users) == 0:
-            logger.warning(f"No users found with at least {min_events} '{role}'.")
-            return []
-        return [EventUserListItem(**item) for item in users]
-    except ClientError as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
-    except ParamValidationError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid parameters: {e}")
-    except Exception as e:
-        logger.error(f"Unexpected error in get_users_by_hosted_event_count: {e}")
-        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
-
 @router.get(
     "/{user_id}",
     response_model=User,
@@ -119,3 +90,67 @@ async def get_users_by_filter(
         raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
+
+@router.post(
+    "/filter_by",
+    response_model=List[EventUserListItem],
+    summary="Get Users by Hosted Event Count",
+    description="Retrieves users who have hosted at least the specified number of events.",
+)
+async def get_users_by_role_event_count(
+    min_events: int = Query(1, description="Minimum number of hosted events"),
+    role: str = Query("host", description="Role to filter users by"),
+    relations_repo: UserEventRelationsRepository = Depends(get_user_event_relations_repo)
+):
+    """
+    Retrieves users who have hosted at least min_events events.
+    """
+    try:
+        logger.debug(f"Querying for users with role '{role}' and at least {min_events} hosted events.")
+        users = relations_repo.get_event_users_by_role_and_min_events(role=role, min_events=min_events)
+        if not users or len(users) == 0:
+            logger.warning(f"No users found with at least {min_events} '{role}'.")
+            return []
+        return [EventUserListItem(**item) for item in users]
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
+    except ParamValidationError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid parameters: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error in get_users_by_hosted_event_count: {e}")
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
+
+@router.post(
+    "/send_email",
+    summary="Send Predefined Email to Multiple Users",
+    description="Sends a predefined email to all specified users.",
+)
+async def send_email_to_users(
+    user_ids: List[str],
+    background_tasks: BackgroundTasks,
+    repo: UserRepository = Depends(get_user_repo)
+):
+    """
+    Sends a predefined email to all users in the given user_ids list.
+    """
+    subject = "Welcome to InnovationX CRM!"
+    body = (
+        "Dear user,\n\n"
+        "Thank you for being a part of InnovationX CRM. "
+        "We are excited to have you onboard.\n\n"
+        "Best regards,\nInnovationX Team"
+    )
+    not_found = []
+    sent_to = []
+    for user_id in user_ids:
+        user_data = repo.get_user_by_id(user_id)
+        if not user_data or not user_data.get("email"):
+            not_found.append(user_id)
+            continue
+        to_email = user_data["email"]
+        background_tasks.add_task(send_email, to_email, subject, body)
+        sent_to.append(to_email)
+    return {
+        "message": f"Emails will be sent to: {sent_to}",
+        "not_found": not_found
+    }
