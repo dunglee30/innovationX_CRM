@@ -51,26 +51,24 @@ class UserEventRelationsRepository(BaseRepository):
             print(f"DynamoDB ClientError in UserEventRelationsRepository.get_users_for_event for {event_id}: {e}")
             raise
     
-    def get_event_users_by_role_and_min_events(self, role: str, min_events: int) -> List[Dict[str, Any]]:
+    def get_event_users_by_role_and_min_events(
+            self,
+            role: str,
+            min_events: int
+        ) -> List[Dict[str, Any]]:
         """
         Returns EventUserListItem objects for users with the given role who have hosted at least min_events events.
-        Uses scan with ExpressionAttributeNames and ExpressionAttributeValues for compatibility with reserved keywords.
+        Uses query on the new GSI (role-user_event-index).
         """
-        logger.debug(f"Querying UserEventRelations for role '{role}' and min_events {min_events}")
+        logger.debug(f"Querying UserEventRelations for role '{role}' and min_events {min_events} using GSI")
         try:
-            response = self.table.scan(
-                FilterExpression="#role = :role",
-                ExpressionAttributeNames={
-                    "#role": "role"
-                },
-                ExpressionAttributeValues={
-                    ":role": role
-                }
+            response = self.table.query(
+                IndexName='role-user_event-index',
+                KeyConditionExpression=boto3.dynamodb.conditions.Key('role').eq(role)
             )
             relations = response.get('Items', [])
             user_event_counts = Counter(rel.get('user_id') for rel in relations if 'user_id' in rel)
             filtered_user_ids = [user_id for user_id, count in user_event_counts.items() if count >= min_events]
-            # Build EventUserListItem objects from relation data
             if len(filtered_user_ids) == 0:
                 logger.debug(f"No users found with role '{role}' and at least {min_events} hosted events.")
                 return []
@@ -92,4 +90,3 @@ class UserEventRelationsRepository(BaseRepository):
             import traceback
             logger.debug(f"Error in get_event_users_by_role_and_min_events: {e}\nTraceback: {traceback.format_exc()}")
             raise RuntimeError(f"Failed to retrieve users with role '{role}' and hosted event count >= {min_events}: {e}")
-        

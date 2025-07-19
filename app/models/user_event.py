@@ -20,7 +20,8 @@ class UserEventRelation(BaseModel):
     state: Optional[str] = None
     event_id: str
     event_title: Optional[str] = Field(None) 
-    event_date: Optional[str] = None 
+    event_date: Optional[str] = None
+    user_event_id: str  # Unique ID for the user-event relation, if needed
 
     # class Config:
     #     populate_by_name = True

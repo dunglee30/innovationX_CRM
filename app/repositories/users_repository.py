@@ -32,9 +32,10 @@ class UserRepository(BaseRepository):
             print(f"DynamoDB ClientError in UserRepository.get_all_users: {e}")
             raise
     
-    def get_users_by_filter(self, filter_list: list, limit: int = 10, exclusive_start_key: dict = None) -> dict:
-        """Generic filter and pagination for Users table."""
-        scan_kwargs = {"Limit": limit}
+    def get_users_by_filter(self, filter_list: list, limit: int = 10, exclusive_start_key: dict = None, sort_by: str = None, sort_order: str = "asc") -> dict:
+        """Generic filter, pagination, and sorting for Users table. Returns up to `limit` items after filtering."""
+        scan_batch_size = 10
+        scan_kwargs = {"Limit": scan_batch_size}
         # Build filter expression
         if filter_list:
             filter_expr = None
@@ -48,13 +49,73 @@ class UserRepository(BaseRepository):
                 scan_kwargs["FilterExpression"] = filter_expr
         if exclusive_start_key:
             scan_kwargs["ExclusiveStartKey"] = exclusive_start_key
+        items = []
+        last_evaluated_key = None
         try:
-            response = self.table.scan(**scan_kwargs)
-            logger.debug(f"Raw DynamoDB scan response: {response}")
+            while len(items) < limit:
+                response = self.table.scan(**scan_kwargs)
+                logger.debug(f"Raw DynamoDB scan response: {response}")
+                batch = response.get('Items', [])
+                items.extend(batch)
+                last_evaluated_key = response.get('LastEvaluatedKey')
+                if not last_evaluated_key:
+                    break
+                scan_kwargs["ExclusiveStartKey"] = last_evaluated_key
+            # Only return up to `limit` items
+            # --- Sorting logic ---
+            if sort_by:
+                items = sorted(
+                    items,
+                    key=lambda x: x.get(sort_by, ""),
+                    reverse=(sort_order == "desc")
+                )
             return {
-                "items": response.get('Items', []),
-                "last_evaluated_key": response.get('LastEvaluatedKey')
+                "items": items[:limit],
+                "last_evaluated_key": last_evaluated_key if len(items) >= limit else None
             }
         except ClientError as e:
             print(f"DynamoDB ClientError in UserRepository.get_users_by_filter: {e}")
+            raise
+
+    def create_user(self, user_data: dict) -> None:
+        """Creates a new user in the Users table."""
+        try:
+            self.table.put_item(Item=user_data)
+        except ClientError as e:
+            print(f"DynamoDB ClientError in UserRepository.create_user: {e}")
+            raise
+
+    def update_user(self, user_id: str, user_data: dict) -> dict:
+        """Updates an existing user in the Users table, handling reserved keywords."""
+        try:
+            update_expr_parts = []
+            expr_attr_values = {}
+            expr_attr_names = {}
+            for k, v in user_data.items():
+                if k != "user_id":
+                    placeholder = f":{k}"
+                    name_placeholder = f"#{k}" if k in ["state"] else k
+                    update_expr_parts.append(f"{name_placeholder} = {placeholder}")
+                    expr_attr_values[placeholder] = v
+                    if k in ["state"]:
+                        expr_attr_names[name_placeholder] = k
+            update_expr = "SET " + ", ".join(update_expr_parts)
+            response = self.table.update_item(
+                Key={"user_id": user_id},
+                UpdateExpression=update_expr,
+                ExpressionAttributeValues=expr_attr_values,
+                ExpressionAttributeNames=expr_attr_names if expr_attr_names else None,
+                ReturnValues="ALL_NEW"
+            )
+            return response.get("Attributes")
+        except ClientError as e:
+            print(f"DynamoDB ClientError in UserRepository.update_user: {e}")
+            raise
+
+    def delete_user(self, user_id: str) -> None:
+        """Deletes a user from the Users table."""
+        try:
+            self.table.delete_item(Key={"user_id": user_id})
+        except ClientError as e:
+            print(f"DynamoDB ClientError in UserRepository.delete_user: {e}")
             raise

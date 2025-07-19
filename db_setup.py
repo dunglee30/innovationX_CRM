@@ -74,14 +74,30 @@ def create_all_tables():
             {'AttributeName': 'PK', 'AttributeType': 'S'},
             {'AttributeName': 'SK', 'AttributeType': 'S'},
             {'AttributeName': 'GSI1_PK', 'AttributeType': 'S'},
-            {'AttributeName': 'GSI1_SK', 'AttributeType': 'S'}
+            {'AttributeName': 'GSI1_SK', 'AttributeType': 'S'},
+            {'AttributeName': 'role', 'AttributeType': 'S'},
+            {'AttributeName': 'user_event_id', 'AttributeType': 'S'}
         ],
-        global_secondary_indexes=[{
-            'IndexName': 'GSI1_PK-GSI1_SK-index',
-            'KeySchema': [{'AttributeName': 'GSI1_PK', 'KeyType': 'HASH'}, {'AttributeName': 'GSI1_SK', 'KeyType': 'RANGE'}],
-            'Projection': {'ProjectionType': 'ALL'},
-            'ProvisionedThroughput': {'ReadCapacityUnits': 1, 'WriteCapacityUnits': 1}
-        }]
+        global_secondary_indexes=[
+            {
+                'IndexName': 'GSI1_PK-GSI1_SK-index',
+                'KeySchema': [
+                    {'AttributeName': 'GSI1_PK', 'KeyType': 'HASH'},
+                    {'AttributeName': 'GSI1_SK', 'KeyType': 'RANGE'}
+                ],
+                'Projection': {'ProjectionType': 'ALL'},
+                'ProvisionedThroughput': {'ReadCapacityUnits': 1, 'WriteCapacityUnits': 1}
+            },
+            {
+                'IndexName': 'role-user_event-index',
+                'KeySchema': [
+                    {'AttributeName': 'role', 'KeyType': 'HASH'},
+                    {'AttributeName': 'user_event_id', 'KeyType': 'RANGE'}
+                ],
+                'Projection': {'ProjectionType': 'ALL'},
+                'ProvisionedThroughput': {'ReadCapacityUnits': 1, 'WriteCapacityUnits': 1}
+            }
+        ]
     )
 
 # --- Data Insertion Function ---
@@ -105,7 +121,7 @@ def put_sample_data():
             'company': f'Company {random.choice(range(1, 4))}',
             'city': f'City {random.choice(range(1, 6))}',
             'state': f'State {random.choice(range(1, 6))}',
-        } for n in range(1, 40)  # Create 40 new users
+        } for n in range(1, 41)  # Create 40 new users
     ]
     for user in new_users_data:
         users_table.put_item(Item=user)
@@ -130,9 +146,15 @@ def put_sample_data():
     roles = ['attendee', 'host']
     relation_types = {'host': 'EventHosting', 'attendee': 'EventAttendance'}
     relations = []
-    for i in range(150):  # Create 100 relations
+    user_event_pairs = set()  # Track (user_id, event_id) pairs
+    attempts = 0
+    while len(relations) < 200 and attempts < 5000:
         user = random.choice(new_users_data)
         event = random.choice(new_events_data)
+        pair = (user['user_id'], event['event_id'])
+        if pair in user_event_pairs:
+            attempts += 1
+            continue  # Skip if this user already has a role for this event
         role = random.choice(roles)
         relations.append({
             'PK': f"USER#{user['user_id']}",
@@ -142,6 +164,7 @@ def put_sample_data():
             'type': relation_types[role],
             'user_id': user['user_id'],
             'role': role,
+            'user_event_id': f"{user['user_id']}#{event['event_id']}",
             'first_name': user['first_name'],
             'last_name': user['last_name'],
             'phone_number': user['phone_number'],
@@ -154,6 +177,8 @@ def put_sample_data():
             'event_title': event['title'],
             'event_date': event['start_at']
         })
+        user_event_pairs.add(pair)
+        attempts += 1
     for rel in relations:
         relations_table.put_item(Item=rel)
     print(f"Inserted {len(relations)} new relations.")

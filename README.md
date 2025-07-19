@@ -59,6 +59,10 @@ This is the repository for a CRM built by InnovationX.
 | event_title | string   | Event title (optional)                       |
 | event_date  | string   | Event date (optional)                        |
 
+#### Global Secondary Indexes (GSI)
+- **GSI1_PK-GSI1_SK-index**: Used for fast querying users/events by event or user.
+- **role-user_event-index**: Used for fast querying users by role and event count (e.g., hosts).
+
 #### List Item Models
 
 **UserEventListItem**
@@ -102,9 +106,12 @@ This is the repository for a CRM built by InnovationX.
 ### User Endpoints
 - `GET /users/{user_id}`: Get user profile by ID
 - `GET /users/{user_id}/events`: Get events associated with a user
-- `POST /users/filter`: Filter users with pagination
-- `POST /users/filter_by`: Get users by hosted event count and role
+- `POST /users/`: Filter users with pagination and sorting
+- `GET /users/events_and_role`: Get users by hosted event count and role
 - `POST /users/send_email`: Send a predefined email to a list of users
+- `POST /users/create`: Create a new user
+- `PUT /users/{user_id}`: Update a user
+- `DELETE /users/{user_id}`: Delete a user
 
 ### Example Requests
 
@@ -118,16 +125,21 @@ curl -X GET "http://localhost:8000/users/123"
 curl -X GET "http://localhost:8000/users/123/events"
 ```
 
-#### Filter Users
+#### Filter Users (with sorting)
 ```bash
-curl -X POST "http://localhost:8000/users/filter" \
+curl -X POST "http://localhost:8000/users/" \
   -H "Content-Type: application/json" \
-  -d '{"filter": [{"field": "company", "value": "Company Name"}], "limit": 10, "exclusive_start_key": {}}'
+  -d '{
+    "filter": [{"field": "company", "value": "Company Name"}],
+    "limit": 10,
+    "sort_by": "first_name",
+    "sort_order": "asc"
+  }'
 ```
 
-#### Get Users by Hosted Event Count
+#### Get Users by Hosted Event Count and Role
 ```bash
-curl -X POST "http://localhost:8000/users/events_and_role?min_events=2&role=host"
+curl -X GET "http://localhost:8000/users/events_and_role?min_events=2&role=host"
 ```
 
 #### Send Email to Multiple Users
@@ -136,6 +148,44 @@ curl -X POST "http://localhost:8000/users/send_email" \
   -H "Content-Type: application/json" \
   -d '{"user_ids": ["123", "456", "789"]}'
 ```
+
+#### Create a New User
+```bash
+curl -X POST "http://localhost:8000/users/create" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Alice",
+    "last_name": "Smith",
+    "phone_number": "+84123456789",
+    "email": "alice@example.com"
+  }'
+```
+
+#### Update a User
+```bash
+curl -X PUT "http://localhost:8000/users/123" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Alice",
+    "last_name": "Smith",
+    "phone_number": "+84123456789",
+    "email": "alice@example.com"
+  }'
+```
+
+#### Delete a User
+```bash
+curl -X DELETE "http://localhost:8000/users/123"
+```
+
+## Requirements
+
+- **Python**: >=3.9
+- **FastAPI**: >=0.70.0
+- **boto3**: >=1.20.23
+- **DynamoDB**: Local or AWS DynamoDB (tested with DynamoDB Local Docker image)
+
+See `requirements.txt` for full Python package requirements.
 
 ## Environment Variables
 
