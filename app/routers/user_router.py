@@ -1,24 +1,58 @@
 # app/routers/users_router.py
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi.logger import logger
 from typing import List
 from app.models.users import User
-from app.models.user_event import UserEventListItem
+from app.models.user_event import EventUserListItem, UserEventListItem
 from app.repositories.users_repository import UserRepository
 from app.repositories.user_event_repository import UserEventRelationsRepository
 from app.dependencies import get_user_repo, get_user_event_relations_repo
 from app.utils.pagination import paginate_dynamodb_response
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ParamValidationError
 from app.utils.filter_request import FilterQueryRequest
 import logging
 
-logger = logging.getLogger('uvicorn.error')
-logger.setLevel(logging.DEBUG)
+uvicorn_logger = logging.getLogger('uvicorn.error')
+logger.handlers = uvicorn_logger.handlers
+if __name__ != "main":
+    logger.setLevel(uvicorn_logger.level)
+else:
+    logger.setLevel(logging.DEBUG)
 
 router = APIRouter(
     prefix="/users",
     tags=["Users"]
 )
+
+@router.get(
+    "/by_role_event_count",
+    response_model=List[EventUserListItem],
+    summary="Get Users by Hosted Event Count",
+    description="Retrieves users who have hosted at least the specified number of events.",
+)
+async def get_users_by_role_event_count(
+    min_events: int = Query(1, description="Minimum number of hosted events"),
+    role: str = Query("host", description="Role to filter users by"),
+    relations_repo: UserEventRelationsRepository = Depends(get_user_event_relations_repo)
+):
+    """
+    Retrieves users who have hosted at least min_events events.
+    """
+    try:
+        logger.debug(f"Querying for users with role '{role}' and at least {min_events} hosted events.")
+        users = relations_repo.get_event_users_by_role_and_min_events(role=role, min_events=min_events)
+        if not users or len(users) == 0:
+            logger.warning(f"No users found with at least {min_events} '{role}'.")
+            return []
+        return [EventUserListItem(**item) for item in users]
+    except ClientError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
+    except ParamValidationError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid parameters: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error in get_users_by_hosted_event_count: {e}")
+        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
 
 @router.get(
     "/{user_id}",
@@ -59,31 +93,6 @@ async def get_user_associated_events(
     except ClientError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
-
-@router.get(
-    "/by_role_event_count",
-    response_model=List[User],
-    summary="Get Users by Hosted Event Count",
-    description="Retrieves users who have hosted at least the specified number of events.",
-)
-async def get_users_by_role_event_count(
-    min_events: int = Query(1, description="Minimum number of hosted events"),
-    role: str = Query("host", description="Role to filter users by"),
-    relations_repo: UserEventRelationsRepository = Depends(get_user_event_relations_repo)
-):
-    """
-    Retrieves users who have hosted at least min_events events.
-    """
-    try:
-        users = relations_repo.get_event_users_by_role_and_min_events(role=role, min_events=min_events)
-        if not users:
-            raise HTTPException(status_code=404, detail=f"No users found with at least {min_events} hosted events.")
-        return users
-    except ClientError as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {e.response['Error']['Message']}")
-    except Exception as e:
-        logger.error(f"Unexpected error in get_users_by_hosted_event_count: {e}")
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
 
 @router.post(

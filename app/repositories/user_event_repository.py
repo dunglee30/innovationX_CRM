@@ -5,7 +5,7 @@ from app.models.users import User
 from app.models.user_event import EventUserListItem  # Import EventUserListItem
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, ValidationError, ParamValidationError
 from boto3.dynamodb.conditions import Attr
 from typing import Dict, Any, List 
 import logging
@@ -25,6 +25,7 @@ class UserEventRelationsRepository(BaseRepository):
         using the main table's PK.
         """
         try:
+            logger.debug(f"Querying UserEventRelations for user_id: {user_id}")
             response = self.table.query(
                 KeyConditionExpression=boto3.dynamodb.conditions.Key('PK').eq(f'USER#{user_id}') &
                                      boto3.dynamodb.conditions.Key('SK').begins_with('EVENT#')
@@ -50,31 +51,45 @@ class UserEventRelationsRepository(BaseRepository):
             print(f"DynamoDB ClientError in UserEventRelationsRepository.get_users_for_event for {event_id}: {e}")
             raise
     
-    def get_event_users_by_role_and_min_events(self, role: str, min_events: int) -> List[EventUserListItem]:
+    def get_event_users_by_role_and_min_events(self, role: str, min_events: int) -> List[Dict[str, Any]]:
         """
         Returns EventUserListItem objects for users with the given role who have hosted at least min_events events.
-        Optimized: Scan for items where role matches and SK ends with the role (e.g., HOST).
+        Uses scan with ExpressionAttributeNames and ExpressionAttributeValues for compatibility with reserved keywords.
         """
+        logger.debug(f"Querying UserEventRelations for role '{role}' and min_events {min_events}")
         try:
-            logger.debug(f"Fetching relations for role: {role}")
-            scan_kwargs = {
-                "FilterExpression": Attr('role').eq(role) & Attr('SK').begins_with(f"EVENT#") & Attr('SK').contains(role.upper())
-            }
-            response = self.table.scan(**scan_kwargs)
-            logger.debug(f"Raw DynamoDB scan response for role '{role}': {response}")
+            response = self.table.scan(
+                FilterExpression="#role = :role",
+                ExpressionAttributeNames={
+                    "#role": "role"
+                },
+                ExpressionAttributeValues={
+                    ":role": role
+                }
+            )
             relations = response.get('Items', [])
             user_event_counts = Counter(rel.get('user_id') for rel in relations if 'user_id' in rel)
             filtered_user_ids = [user_id for user_id, count in user_event_counts.items() if count >= min_events]
             # Build EventUserListItem objects from relation data
+            if len(filtered_user_ids) == 0:
+                logger.debug(f"No users found with role '{role}' and at least {min_events} hosted events.")
+                return []
             users = []
             seen = set()
             for rel in relations:
                 user_id = rel.get('user_id')
                 if user_id in filtered_user_ids and user_id not in seen:
                     seen.add(user_id)
-                    users.append(EventUserListItem(**rel))
+                    users.append(rel)
             return users
+        except ParamValidationError as e:
+            logger.debug(f"Error querying UserEventRelations for role '{role}' and min_events {min_events}: {e}")
+            raise RuntimeError(f"Failed to retrieve users with role '{role}' and hosted event count >= {min_events}: {e}")
+        except ClientError as e:
+            logger.debug(f"Error querying UserEventRelations for role '{role}' and min_events {min_events}: {e}")
+            raise RuntimeError(f"Failed to retrieve users with role '{role}' and hosted event count >= {min_events}: {e}")
         except Exception as e:
             import traceback
-            logger.error(f"Error in get_event_users_by_role_and_min_events: {e}\nTraceback: {traceback.format_exc()}")
+            logger.debug(f"Error in get_event_users_by_role_and_min_events: {e}\nTraceback: {traceback.format_exc()}")
             raise RuntimeError(f"Failed to retrieve users with role '{role}' and hosted event count >= {min_events}: {e}")
+        

@@ -39,4 +39,9 @@ services:
       # Ensure AWS_REGION is also passed, although it should be picked from .env
       - AWS_REGION=${AWS_REGION}
     command: /bin/sh -c "python db_setup.py && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
