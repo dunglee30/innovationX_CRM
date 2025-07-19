@@ -122,12 +122,12 @@ curl -X GET "http://localhost:8000/users/123/events"
 ```bash
 curl -X POST "http://localhost:8000/users/filter" \
   -H "Content-Type: application/json" \
-  -d '{"filter": {"role": "host"}, "limit": 10}'
+  -d '{"filter": [{"field": "company", "value": "Company Name"}], "limit": 10, "exclusive_start_key": {}}'
 ```
 
 #### Get Users by Hosted Event Count
 ```bash
-curl -X POST "http://localhost:8000/users/filter_by?min_events=2&role=host"
+curl -X POST "http://localhost:8000/users/events_and_role?min_events=2&role=host"
 ```
 
 #### Send Email to Multiple Users
