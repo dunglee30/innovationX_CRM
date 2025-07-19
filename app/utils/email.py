@@ -2,14 +2,7 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
-
-load_dotenv()
-
-GMAIL_SMTP_SERVER = "smtp.gmail.com"
-GMAIL_SMTP_PORT = 587
-GMAIL_USERNAME = os.getenv("GMAIL_USERNAME")
-GMAIL_PASSWORD = os.getenv("GMAIL_PASSWORD")
+from app.core.config import GMAIL_SMTP_SERVER, GMAIL_SMTP_PORT, GMAIL_USERNAME, GMAIL_PASSWORD
 
 # Gmail SMTP sender using credentials from .env
 def send_email(to_email: str, subject: str, body: str, from_email: str = None):

@@ -20,3 +20,9 @@ USER_EVENT_RELATIONS_TABLE_NAME = os.getenv('USER_EVENT_RELATIONS_TABLE_NAME', '
 API_TITLE = "User and Event Management API"
 API_DESCRIPTION = "API to manage users, events, and their relationships using DynamoDB Hybrid Solution."
 API_VERSION = "1.0.0"
+
+# Email Configuration
+GMAIL_SMTP_SERVER = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+GMAIL_SMTP_PORT = os.getenv("EMAIL_PORT", 587)  # Default to 587 for TLS
+GMAIL_USERNAME = os.getenv("EMAIL_USERNAME", "email@example.com")
+GMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your_email_password")

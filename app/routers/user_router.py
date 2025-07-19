@@ -92,7 +92,7 @@ async def get_users_by_filter(
         raise HTTPException(status_code=500, detail=f"An internal server error occurred: {e}")
 
 @router.post(
-    "/filter_by",
+    "/events_and_role",
     response_model=List[EventUserListItem],
     summary="Get Users by Hosted Event Count",
     description="Retrieves users who have hosted at least the specified number of events.",

@@ -24,7 +24,7 @@ services:
   # FastAPI Application Service (remains unchanged)
   api:
     build: .
-    container_name: fastapi_api
+    container_name: service_api
     ports:
       - "8001:8000" # Map host port 8001 to container port 8000 (FastAPI default)
     depends_on:

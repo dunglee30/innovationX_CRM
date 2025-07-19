@@ -103,8 +103,8 @@ def put_sample_data():
             'gender': 'Male' if n % 2 == 0 else 'Female',
             'job_title': f'Job Title {random.choice(range(1, 4))}',
             'company': f'Company {random.choice(range(1, 4))}',
-            'city': f'City {n}',
-            'state': f'State {n}'
+            'city': f'City {random.choice(range(1, 6))}',
+            'state': f'State {random.choice(range(1, 6))}',
         } for n in range(1, 40)  # Create 40 new users
     ]
     for user in new_users_data:

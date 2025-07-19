@@ -39,8 +39,8 @@ class UserRepository(BaseRepository):
         if filter_list:
             filter_expr = None
             for f in filter_list:
-                key = f.get("key")
-                value = f.get("value")
+                key = f.field
+                value = f.value
                 if key and value is not None:
                     expr = Attr(key).contains(value)
                     filter_expr = expr if filter_expr is None else filter_expr & expr
