@@ -11,29 +11,51 @@ This is the repository for a CRM built by InnovationX.
 ## Data Model Details
 
 ### Users Table
-- **user_id** (string, PK): Unique identifier for each user
-- **name** (string): Full name of the user
-- **email** (string): Email address
-- **role** (string): User role (e.g., host, attendee)
-- **created_at** (datetime): Account creation timestamp
-- **other fields**: Custom attributes as needed
+- **user_id** (string, PK): Unique identifier for the user
+- **first_name** (string): User's first name
+- **last_name** (string): User's last name
+- **phone_number** (string): User's phone number
+- **email** (string): User's email address (unique)
+- **avatar** (string, optional): URL to the user's avatar image
+- **gender** (string, optional): User's gender
+- **job_title** (string, optional): User's job title
+- **company** (string, optional): User's company
+- **city** (string, optional): User's current city
+- **state** (string, optional): User's current state/province
 
 ### Events Table
-- **event_id** (string, PK): Unique identifier for each event
-- **name** (string): Event name
-- **date** (datetime): Event date
-- **location** (string): Event location
-- **host_id** (string): User ID of the event host
-- **description** (string): Event description
-- **other fields**: Custom attributes as needed
+- **event_id** (string, PK): Unique identifier for the event
+- **slug** (string): URL-friendly identifier for the event
+- **title** (string): Title of the event
+- **description** (string, optional): Detailed description of the event
+- **start_at** (string): Start date and time of the event (ISO 8601 format)
+- **end_at** (string): End date and time of the event (ISO 8601 format)
+- **venue** (string): Location or platform where the event takes place
+- **max_capacity** (int, optional): Maximum number of attendees for the event
 
 ### UserEventRelations Table
-- **relation_id** (string, PK): Unique identifier for the relation
-- **user_id** (string, FK): Linked user
-- **event_id** (string, FK): Linked event
-- **role** (string): Role in event (host, attendee, etc.)
-- **status** (string): Participation status (confirmed, invited, etc.)
-- **other fields**: Custom attributes as needed
+- **PK** (string): Partition key
+- **SK** (string): Sort key
+- **GSI1_PK** (string): Global secondary index partition key
+- **GSI1_SK** (string): Global secondary index sort key
+- **type** (string): Relation type (e.g., "EventOwnership", "EventHosting")
+- **user_id** (string): Linked user
+- **role** (string): Role in event (owner, host, attendee)
+- **first_name** (string, optional): User's first name
+- **last_name** (string, optional): User's last name
+- **phone_number** (string, optional): User's phone number
+- **email** (string, optional): User's email address
+- **job_title** (string, optional): User's job title
+- **company** (string, optional): User's company
+- **city** (string, optional): User's city
+- **state** (string, optional): User's state/province
+- **event_id** (string): Linked event
+- **event_title** (string, optional): Event title
+- **event_date** (string, optional): Event date
+
+#### List Item Models
+- **UserEventListItem**: event_id, event_title, role, event_date
+- **EventUserListItem**: user_id, first_name, last_name, role, phone_number, email, job_title, company, city, state
 
 ## Entity Relationships
 - One user can host or attend many events
