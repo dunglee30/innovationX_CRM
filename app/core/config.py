@@ -15,6 +15,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'wJalrXUtnFEMI/K7MDEN
 USERS_TABLE_NAME = os.getenv('USERS_TABLE_NAME', 'Users')
 EVENTS_TABLE_NAME = os.getenv('EVENTS_TABLE_NAME', 'Events')
 USER_EVENT_RELATIONS_TABLE_NAME = os.getenv('USER_EVENT_RELATIONS_TABLE_NAME', 'UserEventRelations')
+EMAIL_LOGS_TABLE_NAME = os.getenv('EMAIL_LOGS_TABLE_NAME', 'EmailLogs')
 
 # Other global settings can go here
 API_TITLE = "User and Event Management API"

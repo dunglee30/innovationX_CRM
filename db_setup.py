@@ -16,7 +16,7 @@ AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', 'wJalrXUtnFEMI/K7MDEN
 USERS_TABLE_NAME = os.getenv('USERS_TABLE_NAME', 'Users')
 EVENTS_TABLE_NAME = os.getenv('EVENTS_TABLE_NAME', 'Events')
 USER_EVENT_RELATIONS_TABLE_NAME = os.getenv('USER_EVENT_RELATIONS_TABLE_NAME', 'UserEventRelations')
-
+EMAIL_LOGS_TABLE_NAME = os.getenv('EMAIL_LOGS_TABLE_NAME', 'EmailLogs')
 # --- Boto3 Clients and Resources ---
 dynamodb_client = boto3.client(
     'dynamodb',
@@ -67,6 +67,7 @@ def create_all_tables():
     print("\n--- Creating All DynamoDB Tables ---")
     create_dynamodb_table(USERS_TABLE_NAME, [{'AttributeName': 'user_id', 'KeyType': 'HASH'}], [{'AttributeName': 'user_id', 'AttributeType': 'S'}])
     create_dynamodb_table(EVENTS_TABLE_NAME, [{'AttributeName': 'event_id', 'KeyType': 'HASH'}], [{'AttributeName': 'event_id', 'AttributeType': 'S'}])
+    create_dynamodb_table(EMAIL_LOGS_TABLE_NAME, [{'AttributeName': 'email_id', 'KeyType': 'HASH'}], [{'AttributeName': 'email_id', 'AttributeType': 'S'}])
     create_dynamodb_table(
         USER_EVENT_RELATIONS_TABLE_NAME,
         [{'AttributeName': 'PK', 'KeyType': 'HASH'}, {'AttributeName': 'SK', 'KeyType': 'RANGE'}],
